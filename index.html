@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search GitHub Users by Location</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-control {
+            border-radius: 20px;
+        }
+        .search-btn {
+            border-radius: 20px;
+            padding: 10px 20px;
+        }
+        .user {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .user img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user a {
+            color: #0366d6;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Search GitHub Users by Location</h1>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="location" name="location" placeholder="Enter location">
+                    <div id="location-error" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <input type="number" class="form-control" id="repositories" name="repositories" min="1" placeholder="Minimum Repositories">
+                    <div id="repositories-error" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <input type="number" class="form-control" id="followers" name="followers" min="1" placeholder="Minimum Followers">
+                    <div id="followers-error" class="error-message"></div>
+                </div>
+
+                <button class="btn btn-primary btn-block search-btn" onclick="searchUsers()">Search</button>
+            </div>
+        </div>
+
+        <div id="user-list" class="mt-4"></div>
+    </div>
+
+    <script>
+        const userList = document.getElementById('user-list');
+        const locationInput = document.getElementById('location');
+        const repositoriesInput = document.getElementById('repositories');
+        const followersInput = document.getElementById('followers');
+
+        // Function to search users by location, repositories, and followers
+        function searchUsers() {
+            const location = locationInput.value.trim();
+            const repositories = repositoriesInput.value.trim();
+            const followers = followersInput.value.trim();
+
+            // Validate inputs
+            if (location === "") {
+                displayErrorMessage("location", "Location is required");
+                return;
+            } else {
+                clearErrorMessage("location");
+            }
+
+            if (repositories === "") {
+                displayErrorMessage("repositories", "Minimum repositories is required");
+                return;
+            } else {
+                clearErrorMessage("repositories");
+            }
+
+            if (followers === "") {
+                displayErrorMessage("followers", "Minimum followers is required");
+                return;
+            } else {
+                clearErrorMessage("followers");
+            }
+
+            const url = `https://api.github.com/search/users?q=location:${location}+repos:>${repositories}+followers:>${followers}&sort=followers&order=desc&per_page=30`;
+
+            fetchUsers(url);
+        }
+
+        // Function to display error message for a specific input field
+        function displayErrorMessage(inputId, message) {
+            const errorElement = document.getElementById(`${inputId}-error`);
+            errorElement.textContent = message;
+        }
+
+        // Function to clear error message for a specific input field
+        function clearErrorMessage(inputId) {
+            const errorElement = document.getElementById(`${inputId}-error`);
+            errorElement.textContent = "";
+        }
+
+        // Function to fetch users
+        function fetchUsers(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const users = data.items;
+                    displayUsers(users);
+                })
+                .catch(error => {
+                    console.log('Error:', error);
+                    userList.innerHTML = '<div class="alert alert-danger" role="alert">An error occurred. Please try again later.</div>';
+                });
+        }
+
+        // Function to display users
+        function displayUsers(users) {
+            userList.innerHTML = '';
+
+            users.forEach(user => {
+                const userElement = document.createElement('div');
+                userElement.classList.add('user');
+
+                const avatarElement = document.createElement('img');
+                avatarElement.src = user.avatar_url;
+
+                const linkElement = document.createElement('a');
+                linkElement.href = user.html_url;
+                linkElement.textContent = user.login;
+
+                userElement.appendChild(avatarElement);
+                userElement.appendChild(linkElement);
+                userList.appendChild(userElement);
+            });
+        }
+    </script>
+</body>
+</html>
